@@ -1,0 +1,73 @@
+
+service: stylegan2ada
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+provider:
+  name: aws
+  runtime: python3.7
+  profile: stylegan2ada
+  region: us-east-1
+  timeout: 60
+
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:GetObject"
+          Resource:
+            - "arn:aws:s3:::bucketformlmodels"
+            - "arn:aws:s3:::bucketformlmodels/*"
+        - Effect: "Allow"
+          Action:
+            - "lambda:InvokeFunction"
+          Resource: "*"
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    zip: true
+    slim: true
+    strip: false
+    noDeploy:
+      - docutils
+      - jmespath
+      - pip
+      - python-dateutil
+      - setuptools
+      - six
+      - tensorboard
+    useStaticCache: true
+    useDownloadCache: true
+    cacheLocation: "./cache"
+  
+package:
+  individually: false
+  exclude:
+    - package.json
+    - package-lock.json
+    - node_modules/**
+    - cache/**
+    - test/**
+    - __pycache__/**
+    - .pytest_cache/**
+    - model/pytorch_model.bin
+    - raw/**
+    - .vscode/**
+    - .ipynb_checkpoints/**
+
+functions:
+  generateImages:
+    handler: handler.lambda_handler
+    memorySize: 3008
+    timeout: 300
+    events:
+      - http:
+          path: generate
+          method: post
+          cors: true
+        
+plugins:
+  - serverless-python-requirements
